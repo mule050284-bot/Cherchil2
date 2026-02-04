@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Churchill Guest House</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .room-card { transition: 0.3s; cursor: pointer; border: 2px solid #e2e8f0; }
+        .occupied { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .available { background-color: #f0fdf4; border-color: #22c55e; color: #15803d; }
+    </style>
+</head>
+<body class="bg-gray-50 pb-10">
+    <div class="max-w-xl mx-auto p-4">
+        <header class="bg-blue-900 text-white p-6 rounded-2xl mb-6 shadow-lg text-center">
+            <h1 class="text-2xl font-bold">CHURCHILL GUEST HOUSE</h1>
+            <p class="text-blue-200 text-sm">የእንግዳ መመዝገቢያ ገጽ</p>
+        </header>
+
+        <div class="mb-6">
+            <h2 class="font-bold text-gray-800 mb-4">ክፍል ይምረጡ (Select Room)</h2>
+            <div id="roomGrid" class="grid grid-cols-4 gap-3 text-center font-bold"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+            <form id="bookingForm" class="space-y-4">
+                <div>
+                    <label class="font-bold text-gray-700 block mb-1">የሪሴፕሽን ስም *</label>
+                    <input type="text" id="receptionName" required class="w-full p-3 border rounded-xl bg-gray-50 outline-none">
+                </div>
+                <div>
+                    <label class="font-bold text-gray-700 block mb-1">የተመረጠ ክፍል</label>
+                    <input type="text" id="roomNum" readonly class="w-full p-3 border rounded-xl bg-gray-100 font-bold text-blue-600 text-center">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="guestName" placeholder="የእንግዳ ስም *" required class="p-3 border rounded-xl outline-none">
+                    <input type="text" id="nationality" placeholder="ዜግነት *" required class="p-3 border rounded-xl outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="tel" id="guestPhone" placeholder="ስልክ ቁጥር *" required class="p-3 border rounded-xl outline-none">
+                    <input type="date" id="checkIn" required class="p-3 border rounded-xl outline-none">
+                </div>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">
+                    መረጃ መዝግብ (Submit)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const TELEGRAM_BOT_TOKEN = '8423372388:AAGlp0vl_Q2c9tgVw2vFQmgUyDicsksZ6qk';
+        const TELEGRAM_CHAT_ID = '5541031736';
+        const rooms = [101, 102, 103, 201, 202, 203, 301, 302, 303, 401, 402, 403, 501];
+        let status = JSON.parse(localStorage.getItem('churchill_v2')) || {};
+
+        function render() {
+            const grid = document.getElementById('roomGrid');
+            grid.innerHTML = '';
+            rooms.forEach(num => {
+                const div = document.createElement('div');
+                div.className = `room-card p-4 rounded-xl font-bold ${status[num] ? 'occupied' : 'available'}`;
+                div.innerHTML = `<div>${num}</div><div class="text-[9px] font-normal">${status[num] ? 'የተያዘ' : 'ነፃ'}</div>`;
+                div.onclick = () => { 
+                    document.getElementById('roomNum').value = num;
+                    if(status[num] && confirm("ይህ ክፍል ነፃ ይሁን?")) {
+                        delete status[num];
+                        localStorage.setItem('churchill_v2', JSON.stringify(status));
+                        render();
+                    }
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        document.getElementById('bookingForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const num = document.getElementById('roomNum').value;
+            if(!num) return alert("እባክዎ መጀመሪያ ክፍል ይምረጡ!");
+            const msg = `🏨 *CHURCHILL GUEST HOUSE*\n🏠 ክፍል: ${num}\n👤 እንግዳ: ${document.getElementById('guestName').value}\n🌍 ዜግነት: ${document.getElementById('nationality').value}\n📞 ስልክ: ${document.getElementById('guestPhone').value}\n👤 መዝጋቢ: ${document.getElementById('receptionName').value}`;
+            try {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg, parse_mode: 'Markdown' })
+                });
+                status[num] = true;
+                localStorage.setItem('churchill_v2', JSON.stringify(status));
+                alert("ተሳክቷል! መረጃው ተልኳል።");
+                render();
+                e.target.reset();
+            } catch (err) { alert("ችግር አጋጥሟል!"); }
+        };
+        render();
+    </script>
+</body>
+</html>
