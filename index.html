@@ -6,101 +6,74 @@
     <title>Churchill Admin Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 pb-10">
+<body class="bg-gray-100 pb-10 text-sm">
     <div class="max-w-md mx-auto p-4">
         <div class="bg-white rounded-3xl shadow-xl overflow-hidden border">
             <div class="bg-blue-900 p-6 text-white text-center">
-                <h1 class="text-xl font-bold uppercase tracking-wide">Churchill Guest House</h1>
-                <p class="text-[10px] opacity-70">የላቀ የእንግዳ መቆጣጠሪያ ሲስተም</p>
+                <h1 class="text-xl font-bold uppercase">Churchill Guest House</h1>
+                <p class="text-[10px] opacity-70 font-bold">የላቀ የእንግዳ መቆጣጠሪያ ሲስተም</p>
             </div>
-
             <div class="p-4">
-                <div id="roomGrid" class="grid grid-cols-4 gap-2 mb-6"></div>
-
+                <div id="roomGrid" class="grid grid-cols-4 gap-2 mb-6 text-center font-bold"></div>
                 <form id="bookingForm" class="space-y-3">
-                    <input type="text" id="reception" placeholder="የሪሴፕሽን ስም *" required class="w-full p-3 border rounded-xl bg-gray-50">
+                    <input type="text" id="reception" placeholder="የሪሴፕሽን ስም *" required class="w-full p-3 border rounded-xl bg-gray-50 outline-none">
                     <input type="text" id="roomNum" readonly placeholder="ክፍል ይምረጡ" class="w-full p-3 border rounded-xl bg-blue-50 text-blue-800 font-bold text-center">
-                    <input type="text" id="guest" placeholder="የእንግዳ ሙሉ ስም *" required class="w-full p-3 border rounded-xl">
-                    
+                    <input type="text" id="guest" placeholder="የእንግዳ ሙሉ ስም *" required class="w-full p-3 border rounded-xl outline-none">
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="days" value="1" oninput="calc()" class="p-3 border rounded-xl" title="የቀን ብዛት">
-                        <input type="number" id="price" placeholder="ዋጋ *" oninput="calc()" required class="p-3 border rounded-xl font-bold text-green-700">
+                        <input type="text" id="nation" placeholder="ዜግነት *" required class="p-3 border rounded-xl outline-none">
+                        <input type="tel" id="phone" placeholder="ስልክ ቁጥር *" required class="p-3 border rounded-xl outline-none">
                     </div>
-
-                    <div class="p-3 bg-gray-900 text-white rounded-xl flex justify-between items-center">
-                        <span class="text-xs">ጠቅላላ ክፍያ፡</span>
-                        <span class="text-lg font-bold"><span id="total">0</span> ETB</span>
+                    <div class="grid grid-cols-2 gap-2 bg-yellow-50 p-2 rounded-xl border border-yellow-100">
+                        <div><label class="text-[9px] text-gray-400 ml-1">ቀን</label><input type="number" id="days" value="1" oninput="calc()" class="w-full bg-transparent font-bold"></div>
+                        <div><label class="text-[9px] text-gray-400 ml-1">ዋጋ</label><input type="number" id="price" placeholder="0" oninput="calc()" required class="w-full bg-transparent font-bold text-green-700"></div>
                     </div>
-
+                    <div class="p-4 bg-gray-900 text-white rounded-2xl flex justify-between items-center shadow-inner">
+                        <span class="text-xs opacity-70 uppercase">ጠቅላላ ክፍያ፡</span>
+                        <span class="text-xl font-bold"><span id="totalDisplay">0</span> <small class="text-[10px]">ETB</small></span>
+                    </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">የመታወቂያ ፎቶ አንሳ</label>
-                        <input type="file" id="photo" accept="image/*" capture="camera" class="w-full text-xs p-2 border border-dashed rounded-lg bg-gray-50">
+                        <label class="text-[10px] font-bold text-gray-500 ml-1">የመታወቂያ ፎቶ አንሳ</label>
+                        <input type="file" id="photo" accept="image/*" capture="camera" class="w-full text-xs p-2 border border-dashed rounded-xl">
                     </div>
-
-                    <button type="submit" id="btn" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">መረጃ መዝግብ</button>
+                    <button type="submit" id="btn" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 text-lg">መረጃ መዝግብ (Submit)</button>
                 </form>
             </div>
         </div>
     </div>
-
     <script>
         const URL = 'https://script.google.com/macros/s/AKfycbwWh96yDEN6v4O33pA1svtRqa04423EuMG1kLxz4ZcsXyG8fbpeoPjdOieZwpcDi7ap/exec';
         const rooms = [101, 102, 103, 201, 202, 203, 301, 302, 303, 401, 402, 403, 501];
-        let occ = [];
-
-        function calc() {
-            document.getElementById('total').innerText = (document.getElementById('days').value || 0) * (document.getElementById('price').value || 0);
-        }
-
+        function calc() { document.getElementById('totalDisplay').innerText = (document.getElementById('days').value || 0) * (document.getElementById('price').value || 0); }
         async function sync() {
             try {
                 const r = await fetch(URL + '?action=getOccupied');
-                occ = await r.json();
+                const occ = await r.json();
                 const g = document.getElementById('roomGrid');
                 g.innerHTML = '';
                 rooms.forEach(n => {
                     const is = occ.includes(n.toString());
                     const d = document.createElement('div');
-                    d.className = `p-3 rounded-xl border-2 text-center font-bold text-sm ${is ? 'bg-red-50 border-red-300 text-red-600 opacity-60' : 'bg-green-50 border-green-300 text-green-700 cursor-pointer'}`;
-                    d.innerHTML = `<div>${n}</div><div class="text-[8px]">${is ? 'ተይዟል' : 'ነፃ'}</div>`;
+                    d.className = `p-3 rounded-xl border-2 ${is ? 'bg-red-50 border-red-300 text-red-600 opacity-60' : 'bg-green-50 border-green-300 text-green-700 cursor-pointer'}`;
+                    d.innerHTML = `<div>${n}</div><div class="text-[8px] font-normal uppercase">${is ? 'Occupied' : 'Free'}</div>`;
                     if(!is) d.onclick = () => { document.getElementById('roomNum').value = n; };
                     g.appendChild(d);
                 });
             } catch(e) {}
         }
-
         document.getElementById('bookingForm').onsubmit = async (e) => {
             e.preventDefault();
             const b = document.getElementById('btn');
-            if(!document.getElementById('roomNum').value) return alert("እባክዎ መጀመሪያ ክፍል ይምረጡ!");
-            
             b.disabled = true; b.innerText = "በመመዝገብ ላይ...";
-            
             let photoBase64 = "";
             const file = document.getElementById('photo').files[0];
             if(file) {
                 const reader = new FileReader();
-                photoBase64 = await new Promise(r => {
-                    reader.onload = () => r(reader.result);
-                    reader.readAsDataURL(file);
-                });
+                photoBase64 = await new Promise(r => { reader.onload = () => r(reader.result); reader.readAsDataURL(file); });
             }
-
-            const data = {
-                room: document.getElementById('roomNum').value,
-                guest: document.getElementById('guest').value,
-                reception: document.getElementById('reception').value,
-                days: document.getElementById('days').value,
-                price: document.getElementById('price').value,
-                total: document.getElementById('total').innerText,
-                photoData: photoBase64
-            };
-
+            const data = { room: document.getElementById('roomNum').value, guest: document.getElementById('guest').value, nation: document.getElementById('nation').value, phone: document.getElementById('phone').value, reception: document.getElementById('reception').value, days: document.getElementById('days').value, price: document.getElementById('price').value, total: document.getElementById('totalDisplay').innerText, photoData: photoBase64 };
             await fetch(URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-            alert("ተሳክቷል!");
-            location.reload();
+            alert("ተሳክቷል!"); location.reload();
         };
-
         sync(); setInterval(sync, 30000);
     </script>
 </body>
