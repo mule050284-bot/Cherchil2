@@ -3,142 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guest House Pro</title>
+    <title>Guest House Management</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
-        .container { max-width: 500px; margin: auto; }
-        h2 { text-align: center; color: #1a73e8; font-size: 1.2em; }
-        
-        /* Room Grid */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
+        .container { max-width: 600px; margin: auto; }
+        h2 { text-align: center; color: #1a73e8; }
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .room { padding: 15px 5px; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; color: white; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.9em; }
-        .vacant { background-color: #2ecc71; }
-        .occupied { background-color: #e74c3c; }
-
-        /* Form Style */
-        .form-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        label { font-weight: bold; font-size: 0.85em; color: #333; }
-        button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; margin-top: 10px; }
-        .required { color: red; }
+        .room { padding: 15px 5px; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; color: white; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .vacant { background-color: #2ecc71; } /* አረንጓዴ - ነፃ */
+        .occupied { background-color: #e74c3c; } /* ቀይ - የተያዘ */
+        .form-card, .history-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .save-btn { background: #28a745; color: white; }
+        .checkout-btn { background: #f39c12; color: white; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8em; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>የእንግዳ ማረፊያ ቁጥጥር</h2>
-
     <div class="grid" id="roomGrid"></div>
 
-    <div class="form-card">
-        <h3 id="selectedRoomDisplay" style="text-align:center; color:#555;">ክፍል ይምረጡ</h3>
-        <form id="guestForm">
-            <input type="hidden" id="roomNo" required>
-            
-            <label>የሰራተኛ ስም <span class="required">*</span></label>
-            <input type="text" id="staffName" required>
+    <div id="registrationForm" class="form-card" style="display:none;">
+        <h3 id="roomTitle">ክፍል - </h3>
+        <input type="text" id="staffName" placeholder="የሰራተኛ ስም">
+        <input type="text" id="guestName" placeholder="የእንግዳ ስም">
+        <input type="number" id="rate" placeholder="የቀን ክፍያ" oninput="calc()">
+        <input type="number" id="days" placeholder="የቀን ብዛት" oninput="calc()">
+        <input type="number" id="paid" placeholder="የተከፈለ" oninput="calc()">
+        <input type="number" id="balance" placeholder="ቀሪ ሂሳብ" readonly style="background:#eee">
+        
+        <button class="save-btn" onclick="submitData()">መዝግብ</button>
+        <button id="checkoutBtn" class="checkout-btn" style="display:none;" onclick="checkout()">Check-out (ክፍሉን ነፃ አድርግ)</button>
+    </div>
 
-            <label>የእንግዳ ስም <span class="required">*</span></label>
-            <input type="text" id="guestName" required>
-
-            <label>ዜግነት</label>
-            <input type="text" id="nationality" required>
-
-            <label>ስልክ ቁጥር <span class="required">*</span></label>
-            <input type="tel" id="phone" required>
-
-            <div style="display: flex; gap: 10px;">
-                <div style="flex:1"><label>የቀን ክፍያ</label><input type="number" id="rate" oninput="calculate()" required></div>
-                <div style="flex:1"><label>የቀን ብዛት</label><input type="number" id="days" oninput="calculate()" required></div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <div style="flex:1"><label>የተከፈለ</label><input type="number" id="paid" oninput="calculate()" required></div>
-                <div style="flex:1"><label>ቀሪ ሂሳብ</label><input type="number" id="balance" readonly style="background: #eee;"></div>
-            </div>
-
-            <label>መታወቅያ (ፊት) <span class="required">*</span></label>
-            <input type="file" id="idFront" accept="image/*" required>
-
-            <label>መታወቅያ (ጀርባ) <span class="required">*</span></label>
-            <input type="file" id="idBack" accept="image/*" required>
-
-            <button type="button" id="submitBtn" onclick="submitData()">መዝግብ (ወደ Google Sheet ላክ)</button>
-        </form>
+    <div class="history-card">
+        <h3>የመረጃ ታሪክ (History)</h3>
+        <div id="historyList">መረጃ በመጫን ላይ...</div>
     </div>
 </div>
 
 <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyufXL_AHivJsP9Dcq1dTb9-pbqYtSve7EwJMcMZpPku5C9iNciMq__u20tmyKwgWrS/exec'; // <--- እዚህ ጋር Web App URL ይግባ
     const rooms = [101, 102, 103, 201, 202, 203, 301, 302, 303, 401, 402, 403, 501];
-    let roomData = JSON.parse(localStorage.getItem('gh_rooms')) || {};
+    let activeRoom = null;
 
-    function init() {
+    async function loadData() {
+        try {
+            const response = await fetch(scriptURL + "?action=read");
+            const data = await response.json();
+            renderRooms(data);
+            renderHistory(data);
+        } catch (e) { console.error("Error loading data", e); }
+    }
+
+    function renderRooms(data) {
         const grid = document.getElementById('roomGrid');
         grid.innerHTML = '';
         rooms.forEach(num => {
+            const isOccupied = data.find(r => r.roomNo == num && r.status === 'Occupied');
             const div = document.createElement('div');
-            div.className = `room ${roomData[num] ? 'occupied' : 'vacant'}`;
+            div.className = `room ${isOccupied ? 'occupied' : 'vacant'}`;
             div.innerText = num;
-            div.onclick = () => selectRoom(num);
+            div.onclick = () => showForm(num, isOccupied);
             grid.appendChild(div);
         });
     }
 
-    function selectRoom(num) {
-        document.getElementById('roomNo').value = num;
-        document.getElementById('selectedRoomDisplay').innerText = `ክፍል - ${num} ተመርጧል`;
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    function showForm(num, occupiedData) {
+        activeRoom = num;
+        document.getElementById('roomTitle').innerText = "ክፍል " + num;
+        document.getElementById('registrationForm').style.display = 'block';
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        
+        if(occupiedData) {
+            checkoutBtn.style.display = 'block';
+        } else {
+            checkoutBtn.style.display = 'none';
+        }
     }
 
-    function calculate() {
-        const rate = document.getElementById('rate').value || 0;
-        const days = document.getElementById('days').value || 0;
-        const paid = document.getElementById('paid').value || 0;
-        document.getElementById('balance').value = (rate * days) - paid;
+    function calc() {
+        const r = document.getElementById('rate').value || 0;
+        const d = document.getElementById('days').value || 0;
+        const p = document.getElementById('paid').value || 0;
+        document.getElementById('balance').value = (r * d) - p;
     }
 
     async function submitData() {
-        const form = document.getElementById('guestForm');
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxhOeFruwq0CMtyJ9M796ddEIN6egDIY1B8A6rFnc5t0JjW0qO7lYs4wqkvfR4tH7nm/exec'; // <--- እዚህ ጋር URLህን ተካ
-
-        if(!form.checkValidity()) {
-            alert("እባክህ ሁሉንም ቦታዎች በትክክል ሙሉ!");
-            return;
-        }
-
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "በመላክ ላይ...";
-        btn.disabled = true;
-
         const data = {
+            action: "register",
+            roomNo: activeRoom,
             staffName: document.getElementById('staffName').value,
-            roomNo: document.getElementById('roomNo').value,
             guestName: document.getElementById('guestName').value,
-            nationality: document.getElementById('nationality').value,
-            phone: document.getElementById('phone').value,
-            rate: document.getElementById('rate').value,
-            days: document.getElementById('days').value,
-            paid: document.getElementById('paid').value,
             balance: document.getElementById('balance').value,
-            idFront: "Image Attached",
-            idBack: "Image Attached"
+            status: "Occupied"
         };
-
-        try {
-            await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
-            alert("ተመዝግቧል!");
-            roomData[data.roomNo] = true;
-            localStorage.setItem('gh_rooms', JSON.stringify(roomData));
-            form.reset();
-            init();
-        } catch (e) {
-            alert("ስህተት! ኢንተርኔት መኖሩን ያረጋግጡ።");
-        }
-        btn.innerText = "መዝግብ (ወደ Google Sheet ላክ)";
-        btn.disabled = false;
+        await sendData(data);
     }
 
-    init();
+    async function checkout() {
+        if(confirm("ክፍሉን ነፃ ማድረግ ይፈልጋሉ?")) {
+            await sendData({ action: "checkout", roomNo: activeRoom });
+        }
+    }
+
+    async function sendData(payload) {
+        await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
+        alert("ተከናውኗል!");
+        location.reload();
+    }
+
+    function renderHistory(data) {
+        let html = "<table><tr><th>ክፍል</th><th>እንግዳ</th><th>ሁኔታ</th></tr>";
+        data.slice(-5).reverse().forEach(r => {
+            html += `<tr><td>${r.roomNo}</td><td>${r.guestName}</td><td>${r.status}</td></tr>`;
+        });
+        document.getElementById('historyList').innerHTML = html + "</table>";
+    }
+
+    loadData();
 </script>
 </body>
 </html>
