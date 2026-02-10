@@ -13,14 +13,16 @@
         .vacant { background-color: #2ecc71; }
         .occupied { background-color: #e74c3c; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        input, label { display: block; width: 100%; margin: 8px 0; }
+        input[type="text"], input[type="number"], input[type="tel"] { padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        label { font-weight: bold; font-size: 0.85em; color: #333; }
         button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .submit-btn { background: #28a745; color: white; }
         .checkout-btn { background: #f39c12; color: white; }
-        .info-box { background: #e8f0fe; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #1a73e8; font-size: 0.9em; }
+        .info-box { background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #1a73e8; font-size: 0.95em; line-height: 1.6; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75em; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f8f9fa; }
+        .required { color: red; }
     </style>
 </head>
 <body>
@@ -31,23 +33,36 @@
 
     <div id="roomDetails" class="card" style="display:none;">
         <h3 id="detailTitle"></h3>
+        
         <div id="occupiedInfo" class="info-box" style="display:none;"></div>
         
         <form id="guestForm">
             <input type="hidden" id="roomNo">
-            <label id="formLabel">አዲስ እንግዳ መመዝገቢያ</label>
-            <input type="text" id="staffName" placeholder="የሰራተኛ ስም *">
-            <input type="text" id="guestName" placeholder="የእንግዳ ስም *">
-            <input type="tel" id="phone" placeholder="ስልክ ቁጥር *">
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="rate" placeholder="የቀን ክፍያ" oninput="calculate()">
-                <input type="number" id="days" placeholder="የቀን ብዛት" oninput="calculate()">
-            </div>
-            <input type="number" id="paid" placeholder="የተከፈለ ብር" oninput="calculate()">
-            <input type="number" id="balance" placeholder="ቀሪ ሂሳብ" readonly style="background:#eee">
+            <label>የሰራተኛ ስም <span class="required">*</span></label>
+            <input type="text" id="staffName" required>
+            <label>የእንግዳ ስም <span class="required">*</span></label>
+            <input type="text" id="guestName" required>
+            <label>ስልክ ቁጥር <span class="required">*</span></label>
+            <input type="tel" id="phone" required>
             
-            <button type="button" id="submitBtn" class="submit-btn" onclick="submitData()">መዝግብ</button>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1"><label>የቀን ክፍያ</label><input type="number" id="rate" oninput="calculate()" required></div>
+                <div style="flex:1"><label>ቀናት</label><input type="number" id="days" oninput="calculate()" required></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1"><label>የተከፈለ</label><input type="number" id="paid" oninput="calculate()" required></div>
+                <div style="flex:1"><label>ቀሪ</label><input type="number" id="balance" readonly style="background:#eee"></div>
+            </div>
+
+            <label>መታወቅያ (ፊት) <span class="required">*</span></label>
+            <input type="file" id="idFront" accept="image/*" required>
+            <label>መታወቅያ (ጀርባ) <span class="required">*</span></label>
+            <input type="file" id="idBack" accept="image/*" required>
+
+            <button type="button" id="submitBtn" class="submit-btn" onclick="submitData()">መዝግብ (Save)</button>
         </form>
+        
         <button type="button" id="checkoutBtn" class="checkout-btn" style="display:none;" onclick="checkoutRoom()">ክፍሉን ነፃ አድርግ (Check-out)</button>
     </div>
 
@@ -56,9 +71,7 @@
         <div style="overflow-x:auto;">
             <table id="historyTable">
                 <thead>
-                    <tr>
-                        <th>ቀን</th><th>ክፍል</th><th>እንግዳ</th><th>ቀን</th><th>ቀሪ</th><th>ሁኔታ</th>
-                    </tr>
+                    <tr><th>ቀን</th><th>ክፍል</th><th>እንግዳ</th><th>ቀናት</th><th>ቀሪ</th><th>ሁኔታ</th></tr>
                 </thead>
                 <tbody id="historyBody"></tbody>
             </table>
@@ -67,13 +80,15 @@
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxKIFnusiTLxLpxcVAp4io6Kiwu24jnqWP0djTD1B4Pac7oEXD1T0M6ge4xYt4u97EM/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbys3vDbwZBEsM5Ik2YvBVlt9VAsEIandlsmmt6IfITafM6wELBUZ7N1q9t48mP3DBD8/exec'; 
     const rooms = [101, 102, 103, 201, 202, 203, 301, 302, 303, 401, 402, 403, 501];
 
     async function loadData() {
-        const response = await fetch(scriptURL + "?action=read");
-        const data = await response.json();
-        renderUI(data);
+        try {
+            const response = await fetch(scriptURL + "?action=read");
+            const data = await response.json();
+            renderUI(data);
+        } catch (e) { console.log("Error loading data"); }
     }
 
     function renderUI(data) {
@@ -90,7 +105,7 @@
 
         const historyBody = document.getElementById('historyBody');
         historyBody.innerHTML = '';
-        data.slice(-10).reverse().forEach(r => {
+        data.slice(-15).reverse().forEach(r => {
             historyBody.innerHTML += `<tr>
                 <td>${r.date || '-'}</td><td>${r.roomNo}</td><td>${r.guestName}</td>
                 <td>${r.days}</td><td>${r.balance}</td><td>${r.status}</td>
@@ -106,10 +121,12 @@
         if(guest) {
             document.getElementById('occupiedInfo').style.display = 'block';
             document.getElementById('occupiedInfo').innerHTML = `
-                <b>እንግዳ:</b> ${guest.guestName}<br>
-                <b>ስልክ:</b> ${guest.phone}<br>
-                <b>ቀሪ ሂሳብ:</b> ${guest.balance} ብር<br>
-                <b>የገባበት:</b> ${guest.date}`;
+                📌 <b>የእንግዳ መረጃ</b><br>
+                👤 <b>ስም:</b> ${guest.guestName}<br>
+                📞 <b>ስልክ:</b> ${guest.phone}<br>
+                💰 <b>ቀሪ ሂሳብ:</b> ${guest.balance} ብር<br>
+                📅 <b>የገባበት ቀን:</b> ${guest.date}<br>
+                👷 <b>መዝጋቢ:</b> ${guest.staffName}`;
             document.getElementById('guestForm').style.display = 'none';
             document.getElementById('checkoutBtn').style.display = 'block';
         } else {
@@ -118,6 +135,7 @@
             document.getElementById('guestForm').reset();
             document.getElementById('checkoutBtn').style.display = 'none';
         }
+        window.scrollTo({ top: document.getElementById('roomDetails').offsetTop, behavior: 'smooth' });
     }
 
     function calculate() {
@@ -128,28 +146,40 @@
     }
 
     async function submitData() {
+        const form = document.getElementById('guestForm');
+        if(!form.checkValidity()) { alert("እባክህ ሁሉንም የግዴታ ቦታዎች ሙሉ!"); return; }
+
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "በመላክ ላይ..."; btn.disabled = true;
+
         const payload = {
             action: "register",
             roomNo: document.getElementById('roomNo').value,
             staffName: document.getElementById('staffName').value,
             guestName: document.getElementById('guestName').value,
             phone: document.getElementById('phone').value,
+            rate: document.getElementById('rate').value,
             days: document.getElementById('days').value,
+            paid: document.getElementById('paid').value,
             balance: document.getElementById('balance').value,
             status: "Occupied"
         };
+
         await sendRequest(payload);
     }
 
     async function checkoutRoom() {
-        if(confirm("ክፍሉን ነፃ ማድረግ ይፈልጋሉ?")) {
+        if(confirm("ይህንን ክፍል ነፃ ማድረግ (Check-out) ይፈልጋሉ?")) {
             await sendRequest({ action: "checkout", roomNo: document.getElementById('roomNo').value });
         }
     }
 
     async function sendRequest(payload) {
-        await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
-        location.reload();
+        try {
+            await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
+            alert("ተከናውኗል!");
+            location.reload();
+        } catch (e) { alert("ስህተት ተፈጥሯል!"); }
     }
 
     loadData();
