@@ -82,7 +82,7 @@
 </div>
 
 <script>
-    // 1. የክፍሎች ዝርዝር ማስተካከያ (502 እና 503 ተጨምረዋል)
+    // 502 እና 503 ተጨምረዋል
     const scriptURL = 'https://script.google.com/macros/s/AKfycbys3vDbwZBEsM5Ik2YvBVlt9VAsEIandlsmmt6IfITafM6wELBUZ7N1q9t48mP3DBD8/exec'; 
     const rooms = [101, 102, 103, 201, 202, 203, 301, 302, 303, 401, 402, 403, 501, 502, 503];
 
@@ -116,16 +116,21 @@
         });
     }
 
-    // 2. ክፍል ሲነካ የሚመጣ ዝርዝር ማስተካከያ
     function showDetails(num, guest) {
         document.getElementById('roomDetails').style.display = 'block';
         document.getElementById('roomNo').value = num;
         document.getElementById('detailTitle').innerText = `ክፍል ${num}`;
         
         if(guest) {
-            // ስንት ቀን እንደቆየ እና ስንት እንደሚቀረው ማስላት (ቀለል ባለ መንገድ)
-            const paidDays = Math.floor(guest.paid / guest.rate) || 0;
-            const unpaidDays = guest.days - paidDays;
+            // የጠየቅከው ስሌት እዚህ ጋር ነው
+            const dailyRate = parseFloat(guest.rate) || 0;
+            const totalPaid = parseFloat(guest.paid) || 0;
+            const totalDaysOrdered = parseInt(guest.days) || 0;
+            
+            // የተከፈለባቸው ቀናት = የተከፈለ ጠቅላላ ብር / የቀን ክፍያ
+            const paidDays = dailyRate > 0 ? Math.floor(totalPaid / dailyRate) : 0;
+            // ያልተከፈለባቸው ቀናት = የታዘዙ ጠቅላላ ቀናት - የተከፈለባቸው ቀናት
+            const unpaidDays = totalDaysOrdered - paidDays;
 
             document.getElementById('occupiedInfo').style.display = 'block';
             document.getElementById('occupiedInfo').innerHTML = `
@@ -134,7 +139,7 @@
                 🌍 <b>ዜግነት:</b> ${guest.nationality || 'ያልተገለጸ'}<br>
                 📞 <b>ስልክ:</b> ${guest.phone}<br>
                 ✅ <b>የተከፈለባቸው ቀናት:</b> ${paidDays} ቀን<br>
-                ⏳ <b>ያልተከፈለባቸው ቀናት:</b> ${unpaidDays > 0 ? unpaidDays : 0} ቀን<br>
+                ⚠️ <span style="color:red;"><b>ያልተከፈለባቸው ቀናት:</b> ${unpaidDays > 0 ? unpaidDays : 0} ቀን</span><br>
                 💰 <b>ቀሪ ሂሳብ:</b> ${guest.balance} ብር<br>
                 📅 <b>የገባበት ቀን:</b> ${guest.date}<br>
                 👷 <b>መዝጋቢ:</b> ${guest.staffName}`;
